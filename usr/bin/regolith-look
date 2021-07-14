@@ -69,6 +69,12 @@ refresh() {
         fi
     fi
 
+    # Latte Dock does not work well with i3 so we kill it if it starts
+    # This allows a plasma session with latte or an i3 session without
+    if pgrep latte-dock > /dev/null; then
+        killall latte-dock
+    fi
+    
     # restart i3-wm after merging Xresources
     i3-msg -q restart
 }

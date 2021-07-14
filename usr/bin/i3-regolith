@@ -1,2 +1,33 @@
 #!/bin/bash
+    # File Locations - Optional User Overrides
+    USER_XRESOURCE_FILE="$HOME/.Xresources-regolith"
+    USER_XRESOURCE_OVERRIDE_FILE="$HOME/.config/regolith/Xresources"
+    USER_XRESOURCE_SEARCH_PATH="$HOME/.config/regolith/Xresources.d"
+
+    # File Locations - System Defaults
+    DEFAULT_XRESOURCE_FILE="/etc/regolith/styles/root"
+
+    if [ ! -f "$USER_XRESOURCE_FILE" ]; then
+        xrdb -merge $DEFAULT_XRESOURCE_FILE
+    else
+        # Avoid loading an early version of the Regolith Xresource file
+        BAD_XRES_HASH="6797c718fc4767653878ef9db5f68017"
+        HASH=$(md5sum $USER_XRESOURCE_FILE | cut -d " " -f1)
+        if [ -f "$USER_XRESOURCE_FILE" -a "$HASH" != "$BAD_XRES_HASH" ]; then
+            xrdb -I$USER_XRESOURCE_SEARCH_PATH -merge $USER_XRESOURCE_FILE
+        else
+            xrdb -merge $DEFAULT_XRESOURCE_FILE
+        fi
+    fi
+
+    # Check for user overrides of Xresources
+    if [ -f "$USER_XRESOURCE_OVERRIDE_FILE" ]; then
+        xrdb -I$USER_XRESOURCE_SEARCH_PATH -merge $USER_XRESOURCE_OVERRIDE_FILE
+    fi
+
+    # Change the quotes in workspace names from double to to single.
+    # Due to a limitation of the preprocessor they have double quotes.
+    # The i3-wm workspace command fails with double quotes in the name
+    xrdb -query | grep i3-wm.workspace. | sed "s/\"/'/g" | xrdb -merge
+
 /etc/regolith/kde-session-init.sh & sleep 1 & /usr/bin/i3 -c /etc/regolith/i3/config
